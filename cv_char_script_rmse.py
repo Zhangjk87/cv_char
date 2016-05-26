@@ -25,8 +25,7 @@ def find_streak(cap_vs_volt, start_index, diff_threshold):
     return streak_size, streak_dist, slope, x_intercept, y_intercept
 
 
-def find_ideal_cv_line(cap_vs_volt):
-    energy_bandgap = 15
+def find_ideal_cv_line(cap_vs_volt, energy_bandgap):
     diff_threshold = .001*np.median(cap_vs_volt[:,1])
     size_threshold = 5
     initial_slope, _, _, _, _ = sp.stats.linregress(cap_vs_volt[:10, :])
@@ -95,15 +94,15 @@ def main():
             capacitances = cv_raw[:,1]
             cap_inverse_square = np.reciprocal(np.square(capacitances))
             cap_vs_volt = np.column_stack((cv_raw[:,0], cap_inverse_square))
-            print(cap_vs_volt)
             cap_vs_volt_forward = cap_vs_volt[:101, :]
             cap_vs_volt_reverse = cap_vs_volt[101:,:]
+            energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
 
             ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_forward)
+                find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap)
 
             ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_reverse)
+                find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap)
 
             print("Ideal Forward Slope = ", ideal_forward_slope)
             print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
