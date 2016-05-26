@@ -85,7 +85,7 @@ def main():
         writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
                         ['Intrinsic Carrier Concentration'] + ['Fermi Energy'])
 
-        for file_number in range(310,315, 5):
+        for file_number in range(200,205, 5):
 
             filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
             try:
@@ -170,4 +170,4 @@ def main():
                             [intrinsic_carrier_concentration]+[energy_fermi])
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
