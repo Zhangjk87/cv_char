@@ -7,6 +7,7 @@ import os
 import configparser
 import csv
 
+
 def find_streak(cap_vs_volt, start_index, diff_threshold):
     slope, y_intercept, r_value, streak_size = 0,0,0,0
     for end_index in range(start_index+3, cap_vs_volt.shape[0]):
@@ -24,7 +25,7 @@ def find_streak(cap_vs_volt, start_index, diff_threshold):
     return streak_size, streak_dist, slope, x_intercept, y_intercept
 
 
-def find_idealCV_line(cap_vs_volt):
+def find_ideal_cv_line(cap_vs_volt):
     energy_bandgap = 15
     diff_threshold = .001*np.median(cap_vs_volt[:,1])
     size_threshold = 5
@@ -43,29 +44,35 @@ def find_idealCV_line(cap_vs_volt):
 
     return longest_streak_slope, longest_streak_x_intercept, longest_streak_y_intercept
 
+
 def calculate_carrier_density(slope, epsilon_o, epsilon_r, elementary_charge, area, built_in_voltage):
     carrier_density = -2/(elementary_charge*slope*epsilon_o*epsilon_r*area**2*built_in_voltage)
     return carrier_density
+
 
 def calculate_depletion_width(epsilon_o, epsilon_r, elementary_charge, carrier_density, built_in_voltage):
     depletion_width = np.sqrt((2*epsilon_o*epsilon_r*built_in_voltage)/(elementary_charge*carrier_density))
     return depletion_width
 
+
 def calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff_mass_hole, eff_mass_elec, temperature):
     energy_intrinsic = (energy_conduction+energy_valence)/2 + .75*boltzmann*temperature*np.log(eff_mass_hole/eff_mass_elec)
     return energy_intrinsic
 
-def calculate_intrinsic_carrier_concentration(density_of_states_valence, energy_valence, energy_intrinsic, boltzmann, temperature):
+
+def calculate_intrinsic_carrier_concentration(density_of_states_valence, energy_valence, energy_intrinsic,
+                                              boltzmann, temperature):
     intrinsic_carrier_concentration = density_of_states_valence*np.exp((energy_valence-energy_intrinsic)/(boltzmann*temperature))
     return intrinsic_carrier_concentration
 
+
 def calculate_energy_fermi(boltzmann, energy_intrinsic, carrier_density, intrinsic_carrier_concentration, temperature):
     energy_fermi = energy_intrinsic-boltzmann*temperature*np.log(np.abs(carrier_density*(1e-6)/intrinsic_carrier_concentration))
+
     return energy_fermi
 
 
-
-def main(argv):
+def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
@@ -77,6 +84,7 @@ def main(argv):
         writer = csv.writer(csvfile, delimiter=',', quotechar='|',quoting=csv.QUOTE_MINIMAL)
         writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
                         ['Intrinsic Carrier Concentration'] + ['Fermi Energy'])
+
         for file_number in range(310,315, 5):
 
             filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
@@ -91,8 +99,11 @@ def main(argv):
             cap_vs_volt_forward = cap_vs_volt[:101, :]
             cap_vs_volt_reverse = cap_vs_volt[101:,:]
 
-            ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = find_idealCV_line(cap_vs_volt_forward)
-            ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = find_idealCV_line(cap_vs_volt_reverse)
+            ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
+                find_ideal_cv_line(cap_vs_volt_forward)
+
+            ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
+                find_ideal_cv_line(cap_vs_volt_reverse)
 
             print("Ideal Forward Slope = ", ideal_forward_slope)
             print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
@@ -121,6 +132,8 @@ def main(argv):
             plt.show()
             # ******************************************************************
 
+            # ***********************Import Constants From Config*******************************************
+
             averaged_slope = np.mean((ideal_forward_slope, ideal_reverse_slope))
             averaged_x_intercept = np.mean((ideal_forward_y_intercept, ideal_reverse_y_intercept))
             epsilon_o = config.getfloat('Constants', 'epsilon_o')
@@ -135,17 +148,24 @@ def main(argv):
             boltzmann = config.getfloat('Constants', 'boltzmann')
             volume_nc = (4/3)*np.pi*config.getfloat('Constants', 'radius_nc')**3
             density_of_states_valence = (2/volume_nc)*config.getfloat('Constants', 'packing_fraction')
+
+            # *********************************************************************************************
             carrier_density = calculate_carrier_density(averaged_slope, epsilon_o, epsilon_r,
                                                         elementary_charge,area,built_in_voltage=averaged_x_intercept)
+
             depletion_width = calculate_depletion_width(epsilon_o, epsilon_r, elementary_charge, carrier_density,
                                                         built_in_voltage=averaged_x_intercept)
+
             energy_intrinsic = calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff_mass_hole,
                                                           eff_mass_elec, temperature=file_number)
+
             intrinsic_carrier_concentration = calculate_intrinsic_carrier_concentration(density_of_states_valence,
                                                                                         energy_valence, energy_intrinsic,
                                                                                         boltzmann, temperature=file_number)
+
             energy_fermi = calculate_energy_fermi(boltzmann, energy_intrinsic, carrier_density,
                                                   intrinsic_carrier_concentration, temperature=file_number)
+
             writer.writerow([file_number]+[carrier_density]+[depletion_width]+[energy_intrinsic]+
                             [intrinsic_carrier_concentration]+[energy_fermi])
 
