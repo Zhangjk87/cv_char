@@ -25,8 +25,8 @@ def find_streak(cap_vs_volt, start_index, diff_threshold):
     return streak_size, streak_dist, slope, x_intercept, y_intercept
 
 
-def find_ideal_cv_line(cap_vs_volt, energy_bandgap):
-    diff_threshold = .001*np.median(cap_vs_volt[:,1])
+def find_ideal_cv_line(cap_vs_volt, energy_bandgap, diff_threshold_fraction):
+    diff_threshold = diff_threshold_fraction*np.median(cap_vs_volt[:,1])
     size_threshold = 5
     initial_slope, _, _, _, _ = sp.stats.linregress(cap_vs_volt[:10, :])
     longest_streak_slope, longest_streak_dist, longest_streak_x_intercept, longest_streak_y_intercept = 0,0,0,0
@@ -45,13 +45,13 @@ def find_ideal_cv_line(cap_vs_volt, energy_bandgap):
 
 
 def calculate_carrier_density(slope, epsilon_o, epsilon_r, elementary_charge, area, built_in_voltage):
-    carrier_density = -2/(elementary_charge*slope*epsilon_o*epsilon_r*area**2*built_in_voltage)
-    return carrier_density
+    carrier_density = -2/(elementary_charge*slope*epsilon_o*epsilon_r*area**2)
+    return carrier_density #m^-3
 
 
 def calculate_depletion_width(epsilon_o, epsilon_r, elementary_charge, carrier_density, built_in_voltage):
-    depletion_width = np.sqrt((2*epsilon_o*epsilon_r*built_in_voltage)/(elementary_charge*carrier_density))
-    return depletion_width
+    depletion_width = np.sqrt(np.abs((2*epsilon_o*epsilon_r*built_in_voltage))/abs((elementary_charge*carrier_density)))
+    return depletion_width #m^-3
 
 
 def calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff_mass_hole, eff_mass_elec, temperature):
@@ -62,7 +62,7 @@ def calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff
 def calculate_intrinsic_carrier_concentration(density_of_states_valence, energy_valence, energy_intrinsic,
                                               boltzmann, temperature):
     intrinsic_carrier_concentration = density_of_states_valence*np.exp((energy_valence-energy_intrinsic)/(boltzmann*temperature))
-    return intrinsic_carrier_concentration
+    return intrinsic_carrier_concentration #cm^-3
 
 
 def calculate_energy_fermi(boltzmann, energy_intrinsic, carrier_density, intrinsic_carrier_concentration, temperature):
@@ -82,10 +82,12 @@ def main():
     with open(os.path.join(dir,csv_name), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar='|',quoting=csv.QUOTE_MINIMAL)
         writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
-                        ['Intrinsic Carrier Concentration'] + ['Fermi Energy'])
+                        ['Intrinsic Carrier Concentration'] + ['Fermi Energy'] + ['Forward Vbi'] + ['Reverse Vbi'] +
+                        ['Averaged Vbi'])
 
-        for file_number in range(200,205, 5):
+        for file_number in range(200,335, 5):
 
+            print('Currently Working on Data of Temperature: ',file_number)
             filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
             try:
                 cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0,1))
@@ -98,16 +100,25 @@ def main():
             cap_vs_volt_reverse = cap_vs_volt[101:,:]
             energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
 
+            diff_threshold_fraction = .0015
             ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap)
+                find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
 
             ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap)
+                find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
 
-            print("Ideal Forward Slope = ", ideal_forward_slope)
-            print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
-            print("Ideal Reverse Slope", ideal_reverse_slope)
-            print("Ideal Reverse X_intercept", ideal_reverse_x_intercept)
+            if ideal_forward_slope is 0 or ideal_reverse_slope is 0:
+                diff_threshold_fraction = .015
+                ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
+                    find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
+
+                ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
+                    find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
+
+            # print("Ideal Forward Slope = ", ideal_forward_slope)
+            # print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
+            # print("Ideal Reverse Slope", ideal_reverse_slope)
+            # print("Ideal Reverse X_intercept", ideal_reverse_x_intercept)
 
             # *************Creating and Saving Plots****************************
             x_forward = cap_vs_volt_forward[:, 0]
@@ -127,14 +138,15 @@ def main():
             plt.tick_params(axis='both', which='major', labelsize=15)
             plt.locator_params(axis='y', nbins=5)
             pic_name='CV_{0}K_100kHz.png'.format(file_number)
-            # fig.savefig(os.path.join(dir,pic_name))
-            plt.show()
+            fig.savefig(os.path.join(dir,pic_name))
+            # plt.show()
+            plt.close()
             # ******************************************************************
 
             # ***********************Import Constants From Config*******************************************
 
             averaged_slope = np.mean((ideal_forward_slope, ideal_reverse_slope))
-            averaged_x_intercept = np.mean((ideal_forward_y_intercept, ideal_reverse_y_intercept))
+            averaged_x_intercept = np.mean((ideal_forward_x_intercept, ideal_reverse_x_intercept))
             epsilon_o = config.getfloat('Constants', 'epsilon_o')
             epsilon_r = config.getfloat('Constants', 'epsilon_r')
             elementary_charge = config.getfloat('Constants', 'elementary_charge')
@@ -166,7 +178,8 @@ def main():
                                                   intrinsic_carrier_concentration, temperature=file_number)
 
             writer.writerow([file_number]+[carrier_density]+[depletion_width]+[energy_intrinsic]+
-                            [intrinsic_carrier_concentration]+[energy_fermi])
+                            [intrinsic_carrier_concentration]+[energy_fermi]+[ideal_forward_x_intercept]+
+                            [ideal_reverse_x_intercept] + [averaged_x_intercept])
 
 if __name__ == '__main__':
     main()
