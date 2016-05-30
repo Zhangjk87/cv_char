@@ -75,8 +75,6 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
-    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
-    energy_fermi, built_in_voltage = 0,0,0,0,0,0,0
     dir = '{0}/Analysis'.format(directory_name)
     if not os.path.isdir(dir):
          os.makedirs(dir)
@@ -88,7 +86,7 @@ def main():
                         ['Intrinsic Carrier Concentration'] + ['Fermi Energy'] + ['Forward Vbi'] + ['Reverse Vbi'] +
                         ['Averaged Vbi'])
 
-        for file_number in range(210, 215, 5):
+        for file_number in range(200, 335, 5):
 
             print('Currently Working on Data of Temperature: ',file_number)
             filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
@@ -143,7 +141,7 @@ def main():
             pic_name='CV_{0}K_100kHz.png'.format(file_number)
             fig.savefig(os.path.join(dir,pic_name))
             # plt.show()
-            plt.close()
+            plt.close('all')
             # ******************************************************************
 
             # ***********************Import Constants From Config*******************************************
@@ -187,11 +185,29 @@ def main():
             data.append((file_number, carrier_density, depletion_width, energy_intrinsic,
                          intrinsic_carrier_concentration, energy_fermi, averaged_x_intercept))
 
-    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
+    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,\
     energy_fermi, built_in_voltage = zip(*data)
 
-    ax.plot(x_temp, carrier_density, '.', markersize=10, label='Carrier Density vs. Temperature')
-    plt.show()
+    dependent_vars_list = [carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
+                 energy_fermi, built_in_voltage]
+
+    var_names = ['Carrier Density, $cm^{-3}$', 'Depletion Width, $nm$', 'Intrinsic Energy, $eV$',
+                 'Intrinsic Carrier Concentration, $cm^{-3}$', 'Fermi Energy, $eV$', 'Vbi, $V$']
+
+    for i in range(len(var_names)):
+        fig, ax = plt.subplots()
+        fig.suptitle('Temperature, $K$ vs. {0}'.format(var_names[i]), fontsize=20)
+        plt.ylabel(r'{0}'.format(var_names[i]), fontsize=15)
+        plt.xlabel('Temperature, $K$', fontsize=15)
+        plt.tick_params(axis='both', which='major', labelsize=15)
+        plt.locator_params(axis='y', nbins=5)
+        pic_name = 'Temeprature vs. {0}.png'.format(var_names[i])
+        ax.plot(x_temp, dependent_vars_list[i], '.', markersize=10)
+        fig.savefig(os.path.join(dir, pic_name))
+        plt.show()
+        fig.savefig(os.path.join(dir, pic_name))
+        plt.close('all')
+
 
 if __name__ == '__main__':
     main()
