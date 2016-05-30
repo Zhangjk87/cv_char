@@ -75,17 +75,20 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
+    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
+    energy_fermi, built_in_voltage = 0,0,0,0,0,0,0
     dir = '{0}/Analysis'.format(directory_name)
     if not os.path.isdir(dir):
          os.makedirs(dir)
     csv_name = 'data.csv'
+    data = []
     with open(os.path.join(dir,csv_name), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar='|',quoting=csv.QUOTE_MINIMAL)
         writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
                         ['Intrinsic Carrier Concentration'] + ['Fermi Energy'] + ['Forward Vbi'] + ['Reverse Vbi'] +
                         ['Averaged Vbi'])
 
-        for file_number in range(200,335, 5):
+        for file_number in range(210, 215, 5):
 
             print('Currently Working on Data of Temperature: ',file_number)
             filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
@@ -180,6 +183,15 @@ def main():
             writer.writerow([file_number]+[carrier_density]+[depletion_width]+[energy_intrinsic]+
                             [intrinsic_carrier_concentration]+[energy_fermi]+[ideal_forward_x_intercept]+
                             [ideal_reverse_x_intercept] + [averaged_x_intercept])
+
+            data.append((file_number, carrier_density, depletion_width, energy_intrinsic,
+                         intrinsic_carrier_concentration, energy_fermi, averaged_x_intercept))
+
+    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
+    energy_fermi, built_in_voltage = zip(*data)
+
+    ax.plot(x_temp, carrier_density, '.', markersize=10, label='Carrier Density vs. Temperature')
+    plt.show()
 
 if __name__ == '__main__':
     main()
