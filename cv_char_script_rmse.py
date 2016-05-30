@@ -204,8 +204,7 @@ def main():
         pic_name = 'Temeprature vs. {0}.png'.format(var_names[i])
         ax.plot(x_temp, dependent_vars_list[i], '.', markersize=10)
         fig.savefig(os.path.join(dir, pic_name))
-        plt.show()
-        fig.savefig(os.path.join(dir, pic_name))
+        # plt.show()
         plt.close('all')
 
 
