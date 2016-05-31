@@ -78,134 +78,137 @@ def main():
     dir = '{0}/Analysis'.format(directory_name)
     if not os.path.isdir(dir):
          os.makedirs(dir)
-    csv_name = 'data.csv'
-    data = []
-    with open(os.path.join(dir,csv_name), 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar='|',quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
-                        ['Intrinsic Carrier Concentration'] + ['Fermi Energy'] + ['Forward Vbi'] + ['Reverse Vbi'] +
-                        ['Averaged Vbi'])
 
-        for file_number in range(200, 335, 5):
+    for frequency in range (3,6):
+        frequency = 10**frequency
 
-            print('Currently Working on Data of Temperature: ',file_number)
-            filename = "{0}dev2_T{1}K_F100000HZ_CV.txt".format(directory_name, file_number)
-            try:
-                cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0,1))
-            except IOError:
-                continue
-            capacitances = cv_raw[:,1]
-            cap_inverse_square = np.reciprocal(np.square(capacitances))
-            cap_vs_volt = np.column_stack((cv_raw[:,0], cap_inverse_square))
-            cap_vs_volt_forward = cap_vs_volt[:101, :]
-            cap_vs_volt_reverse = cap_vs_volt[101:,:]
-            energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
+        csv_name = '{0}data.csv'.format(frequency)
+        with open(os.path.join(dir, csv_name), 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(['Temperature'] + ['Carrier Density'] + ['Depletion Width'] + ['Intrinsic Energy'] +
+                            ['Intrinsic Carrier Concentration'] + ['Fermi Energy'] + ['Forward Vbi'] + [
+                                'Reverse Vbi'] + ['Averaged Vbi'])
+            data = []
+            for file_number in range(200, 335, 5):
 
-            diff_threshold_fraction = .0015
-            ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
+                print('Currently Working on Data of Temperature: {0} at Frequency {1}'.format(file_number, frequency))
+                filename = "{0}dev3_T{1}K_F{2}HZ_CV.txt".format(directory_name, file_number, frequency)
+                try:
+                    cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0,1))
+                except IOError:
+                    continue
+                capacitances = cv_raw[:,1]
+                cap_inverse_square = np.reciprocal(np.square(capacitances))
+                cap_vs_volt = np.column_stack((cv_raw[:,0], cap_inverse_square))
+                cap_vs_volt_forward = cap_vs_volt[:101, :]
+                cap_vs_volt_reverse = cap_vs_volt[101:,:]
+                energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
 
-            ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
-                find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
-
-            if ideal_forward_slope is 0 or ideal_reverse_slope is 0:
-                diff_threshold_fraction = .015
+                diff_threshold_fraction = .0015
                 ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
                     find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
 
                 ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
                     find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
 
-            # print("Ideal Forward Slope = ", ideal_forward_slope)
-            # print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
-            # print("Ideal Reverse Slope", ideal_reverse_slope)
-            # print("Ideal Reverse X_intercept", ideal_reverse_x_intercept)
+                if ideal_forward_slope is 0 or ideal_reverse_slope is 0:
+                    diff_threshold_fraction = .015
+                    ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
+                        find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
 
-            # *************Creating and Saving Plots****************************
-            x_forward = cap_vs_volt_forward[:, 0]
-            y_forward = cap_vs_volt_forward[:,1]
-            x_reverse = cap_vs_volt_reverse[:, 0]
-            y_reverse = cap_vs_volt_reverse[:, 1]
-            fig, ax = plt.subplots()
-            axes = plt.gca()
-            axes.set_ylim([.99*np.min(cap_vs_volt[:,1]), 1.01*np.max(cap_vs_volt[:,1])])
-            ax.plot(x_forward, y_forward,'.', markersize = 10, label='Forward Sweep')
-            ax.plot(x_reverse, y_reverse, '.', markersize=10, label='Reverse Sweep')
-            ax.plot(x_forward, ideal_forward_slope * x_forward + ideal_forward_y_intercept, '-', label='Forward Sweep Ideal Line')
-            ax.plot(x_reverse, ideal_reverse_slope * x_reverse + ideal_reverse_y_intercept, '-', label='Reverse Sweep Ideal Line')
-            fig.suptitle('Inverse Square Capacitance vs. Voltage-{0}K'.format(file_number), fontsize=20)
-            plt.ylabel(r'Inverse Square Capacitance, $C^{-2}(F^{-2})$',fontsize=15)
-            plt.xlabel('Voltage, V (Volts)',fontsize=15)
-            plt.tick_params(axis='both', which='major', labelsize=15)
-            plt.locator_params(axis='y', nbins=5)
-            pic_name='CV_{0}K_100kHz.png'.format(file_number)
-            fig.savefig(os.path.join(dir,pic_name))
-            # plt.show()
-            plt.close('all')
-            # ******************************************************************
+                    ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
+                        find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
 
-            # ***********************Import Constants From Config*******************************************
+                # print("Ideal Forward Slope = ", ideal_forward_slope)
+                # print("Ideal Forward X_Intercept = ", ideal_forward_x_intercept)
+                # print("Ideal Reverse Slope", ideal_reverse_slope)
+                # print("Ideal Reverse X_intercept", ideal_reverse_x_intercept)
 
-            averaged_slope = np.mean((ideal_forward_slope, ideal_reverse_slope))
-            averaged_x_intercept = np.mean((ideal_forward_x_intercept, ideal_reverse_x_intercept))
-            epsilon_o = config.getfloat('Constants', 'epsilon_o')
-            epsilon_r = config.getfloat('Constants', 'epsilon_r')
-            elementary_charge = config.getfloat('Constants', 'elementary_charge')
-            area = config.getfloat('Constants', 'area')
-            energy_conduction = config.getfloat('Constants', 'energy_conduction')
-            energy_valence = config.getfloat('Constants', 'energy_valence')
-            mass_carrier = config.getfloat('Constants', 'mass_carrier')
-            eff_mass_hole = mass_carrier*config.getfloat('Constants', 'relative_hole_eff_mass')
-            eff_mass_elec = mass_carrier*config.getfloat('Constants', 'relative_elec_eff_mass')
-            boltzmann = config.getfloat('Constants', 'boltzmann')
-            volume_nc = (4/3)*np.pi*config.getfloat('Constants', 'radius_nc')**3
-            density_of_states_valence = (2/volume_nc)*config.getfloat('Constants', 'packing_fraction')
+                # *************Creating and Saving Plots****************************
+                x_forward = cap_vs_volt_forward[:, 0]
+                y_forward = cap_vs_volt_forward[:,1]
+                x_reverse = cap_vs_volt_reverse[:, 0]
+                y_reverse = cap_vs_volt_reverse[:, 1]
+                fig, ax = plt.subplots()
+                axes = plt.gca()
+                axes.set_ylim([.99*np.min(cap_vs_volt[:,1]), 1.01*np.max(cap_vs_volt[:,1])])
+                ax.plot(x_forward, y_forward,'.', markersize = 10, label='Forward Sweep')
+                ax.plot(x_reverse, y_reverse, '.', markersize=10, label='Reverse Sweep')
+                ax.plot(x_forward, ideal_forward_slope * x_forward + ideal_forward_y_intercept, '-', label='Forward Sweep Ideal Line')
+                ax.plot(x_reverse, ideal_reverse_slope * x_reverse + ideal_reverse_y_intercept, '-', label='Reverse Sweep Ideal Line')
+                fig.suptitle('Inverse Square Capacitance vs. Voltage-{0}K at {1}Hz'.format(file_number, frequency), fontsize=20)
+                plt.ylabel(r'Inverse Square Capacitance, $C^{-2}(F^{-2})$',fontsize=15)
+                plt.xlabel('Voltage, V (Volts)',fontsize=15)
+                plt.tick_params(axis='both', which='major', labelsize=15)
+                plt.locator_params(axis='y', nbins=5)
+                pic_name='CV_{0}K_{1}Hz.png'.format(file_number, frequency)
+                fig.savefig(os.path.join(dir,pic_name))
+                # plt.show()
+                plt.close('all')
+                # ******************************************************************
 
-            # *********************************************************************************************
-            carrier_density = calculate_carrier_density(averaged_slope, epsilon_o, epsilon_r,
-                                                        elementary_charge,area,built_in_voltage=averaged_x_intercept)
+                # ***********************Import Constants From Config*******************************************
 
-            depletion_width = calculate_depletion_width(epsilon_o, epsilon_r, elementary_charge, carrier_density,
-                                                        built_in_voltage=averaged_x_intercept)
+                averaged_slope = np.mean((ideal_forward_slope, ideal_reverse_slope))
+                averaged_x_intercept = np.mean((ideal_forward_x_intercept, ideal_reverse_x_intercept))
+                epsilon_o = config.getfloat('Constants', 'epsilon_o')
+                epsilon_r = config.getfloat('Constants', 'epsilon_r')
+                elementary_charge = config.getfloat('Constants', 'elementary_charge')
+                area = config.getfloat('Constants', 'area')
+                energy_conduction = config.getfloat('Constants', 'energy_conduction')
+                energy_valence = config.getfloat('Constants', 'energy_valence')
+                mass_carrier = config.getfloat('Constants', 'mass_carrier')
+                eff_mass_hole = mass_carrier*config.getfloat('Constants', 'relative_hole_eff_mass')
+                eff_mass_elec = mass_carrier*config.getfloat('Constants', 'relative_elec_eff_mass')
+                boltzmann = config.getfloat('Constants', 'boltzmann')
+                volume_nc = (4/3)*np.pi*config.getfloat('Constants', 'radius_nc')**3
+                density_of_states_valence = (2/volume_nc)*config.getfloat('Constants', 'packing_fraction')
 
-            energy_intrinsic = calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff_mass_hole,
-                                                          eff_mass_elec, temperature=file_number)
+                # *********************************************************************************************
+                carrier_density = calculate_carrier_density(averaged_slope, epsilon_o, epsilon_r,
+                                                            elementary_charge,area,built_in_voltage=averaged_x_intercept)
 
-            intrinsic_carrier_concentration = calculate_intrinsic_carrier_concentration(density_of_states_valence,
-                                                                                        energy_valence, energy_intrinsic,
-                                                                                        boltzmann, temperature=file_number)
+                depletion_width = calculate_depletion_width(epsilon_o, epsilon_r, elementary_charge, carrier_density,
+                                                            built_in_voltage=averaged_x_intercept)
 
-            energy_fermi = calculate_energy_fermi(boltzmann, energy_intrinsic, carrier_density,
-                                                  intrinsic_carrier_concentration, temperature=file_number)
+                energy_intrinsic = calculate_energy_intrinsic(energy_conduction, energy_valence, boltzmann, eff_mass_hole,
+                                                              eff_mass_elec, temperature=file_number)
 
-            writer.writerow([file_number]+[carrier_density]+[depletion_width]+[energy_intrinsic]+
-                            [intrinsic_carrier_concentration]+[energy_fermi]+[ideal_forward_x_intercept]+
-                            [ideal_reverse_x_intercept] + [averaged_x_intercept])
+                intrinsic_carrier_concentration = calculate_intrinsic_carrier_concentration(density_of_states_valence,
+                                                                                            energy_valence, energy_intrinsic,
+                                                                                            boltzmann, temperature=file_number)
 
-            data.append((file_number, carrier_density, depletion_width, energy_intrinsic,
-                         intrinsic_carrier_concentration, energy_fermi, averaged_x_intercept))
+                energy_fermi = calculate_energy_fermi(boltzmann, energy_intrinsic, carrier_density,
+                                                      intrinsic_carrier_concentration, temperature=file_number)
 
-    x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,\
-    energy_fermi, built_in_voltage = zip(*data)
+                writer.writerow([file_number]+[carrier_density]+[depletion_width]+[energy_intrinsic]+
+                                [intrinsic_carrier_concentration]+[energy_fermi]+[ideal_forward_x_intercept]+
+                                [ideal_reverse_x_intercept] + [averaged_x_intercept])
 
-    dependent_vars_list = [carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
-                 energy_fermi, built_in_voltage]
+                data.append((file_number, carrier_density, depletion_width, energy_intrinsic,
+                             intrinsic_carrier_concentration, energy_fermi, averaged_x_intercept))
 
-    var_names = ['Carrier Density, $cm^{-3}$', 'Depletion Width, $nm$', 'Intrinsic Energy, $eV$',
-                 'Intrinsic Carrier Concentration, $cm^{-3}$', 'Fermi Energy, $eV$', 'Vbi, $V$']
+            x_temp, carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,\
+            energy_fermi, built_in_voltage = zip(*data)
 
-    for i in range(len(var_names)):
-        fig, ax = plt.subplots()
-        fig.suptitle('Temperature, $K$ vs. {0}'.format(var_names[i]), fontsize=20)
-        plt.ylabel(r'{0}'.format(var_names[i]), fontsize=15)
-        plt.xlabel('Temperature, $K$', fontsize=15)
-        plt.tick_params(axis='both', which='major', labelsize=15)
-        plt.locator_params(axis='y', nbins=5)
-        pic_name = 'Temeprature vs. {0}.png'.format(var_names[i])
-        ax.plot(x_temp, dependent_vars_list[i], '.', markersize=10)
-        fig.savefig(os.path.join(dir, pic_name))
-        # plt.show()
-        plt.close('all')
+            dependent_vars_list = [carrier_density, depletion_width, energy_intrinsic, intrinsic_carrier_concentration,
+                         energy_fermi, built_in_voltage]
+
+            var_names = ['Carrier Density, $cm^{-3}$', 'Depletion Width, $nm$', 'Intrinsic Energy, $eV$',
+                         'Intrinsic Carrier Concentration, $cm^{-3}$', 'Fermi Energy, $eV$', 'Vbi, $V$']
+
+            for i in range(len(var_names)):
+                fig, ax = plt.subplots()
+                fig.suptitle('Temperature, $K$ vs. {0} at {1}Hz'.format(var_names[i], frequency), fontsize=20)
+                plt.ylabel(r'{0}'.format(var_names[i]), fontsize=15)
+                plt.xlabel('Temperature, $K$', fontsize=15)
+                plt.tick_params(axis='both', which='major', labelsize=15)
+                plt.locator_params(axis='y', nbins=5)
+                pic_name = 'Temperature vs. {0} at {1}Hz.png'.format(var_names[i],frequency)
+                ax.plot(x_temp, dependent_vars_list[i], '.', markersize=10)
+                fig.savefig(os.path.join(dir, pic_name))
+                # plt.show()
+                plt.close('all')
 
 
 if __name__ == '__main__':
