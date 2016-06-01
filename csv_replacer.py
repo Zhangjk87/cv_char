@@ -11,9 +11,6 @@ def main():
          os.makedirs(dir)
 
     input_csv_name = 'generated_line_params.csv'
-    csv_name_1000 = '1000_line_params.csv'
-    csv_name_10000 = '10000_line_params.csv'
-    csv_name_100000 = '100000_line_params.csv'
 
     data_dict = {'1000': None, '10000': None, '100000': None}
 
