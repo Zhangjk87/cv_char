@@ -52,20 +52,21 @@ def main():
     if not os.path.isdir(dir):
         os.makedirs(dir)
 
-    csv_name = 'line_params.csv'
-    with open(os.path.join(dir, csv_name), 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Temperature'] + ['Frequency'] + ['Ideal Forward Slope'] + ['Ideal Forward Y Intercept'] +
-                        ['Ideal Forward X Intercept'] + ['Ideal Reverse Slope'] + ['Ideal Reverse Y Intercept'] +
-                        ['Ideal Reverse X Intercept'])
+    for frequency in range(3, 6):
+        freq = 10 ** frequency
 
-        for frequency in range(3, 6):
-            frequency = 10 ** frequency
+        csv_name = '{0}_line_params.csv'.format(freq)
+        with open(os.path.join(dir, csv_name), 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(
+                ['Temperature'] + ['Ideal Forward Slope'] + ['Ideal Forward Y Intercept'] +
+                ['Ideal Forward X Intercept'] + ['Ideal Reverse Slope'] + ['Ideal Reverse Y Intercept'] +
+                ['Ideal Reverse X Intercept'])
 
             for file_number in range(200, 335, 5):
 
-                print('Currently Working on Data of Temperature: {0} at Frequency {1}'.format(file_number, frequency))
-                filename = "{0}dev3_T{1}K_F{2}HZ_CV.txt".format(directory_name, file_number, frequency)
+                print('Currently Working on Data of Temperature: {0} at Frequency {1}'.format(file_number, freq))
+                filename = "{0}dev3_T{1}K_F{2}HZ_CV.txt".format(directory_name, file_number, freq)
                 try:
                     cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0, 1))
                 except IOError:
@@ -85,17 +86,21 @@ def main():
                     find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
 
                 if ideal_forward_slope is 0 or ideal_reverse_slope is 0:
-                    writer.writerow([file_number]+[frequency]+['N/A']+['N/A']+['N/A']+['N/A']+['N/A']+['N/A'])
-                    continue
+                    diff_threshold_fraction = .015
+                    ideal_forward_slope, ideal_forward_x_intercept, ideal_forward_y_intercept = \
+                        find_ideal_cv_line(cap_vs_volt_forward, energy_bandgap, diff_threshold_fraction)
 
-                writer.writerow([file_number]+[frequency]+[ideal_forward_slope]+[ideal_forward_y_intercept]+[ideal_forward_x_intercept]
+                    ideal_reverse_slope, ideal_reverse_x_intercept, ideal_reverse_y_intercept = \
+                        find_ideal_cv_line(cap_vs_volt_reverse, energy_bandgap, diff_threshold_fraction)
+
+                writer.writerow([file_number]+[ideal_forward_slope]+[ideal_forward_y_intercept]+[ideal_forward_x_intercept]
                                 +[ideal_reverse_slope]+[ideal_reverse_y_intercept]+[ideal_reverse_x_intercept])
 
-    csv_name = 'manual_line_params.csv'
-    with open(os.path.join(dir, csv_name), 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Temperature']+['Frequency']+['Forward Left Bound']+['Forward Right Bound']+
-                        ['Reverse Left Bound']+['Reverse Right Bound'])
+            csv_name = 'manual_line_params.csv'
+            with open(os.path.join(dir, csv_name), 'w') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(['Temperature']+['Frequency']+['Forward Left Bound']+['Forward Right Bound']+
+                                ['Reverse Left Bound']+['Reverse Right Bound'])
 
 if __name__ == '__main__':
     main()
