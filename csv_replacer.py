@@ -30,7 +30,7 @@ def main():
             next(reader, None)
             data_dict['{0}'.format(frequency)] = [tuple(line) for line in csv.reader(csvfile)]
 
-    for index, data_tuple in enumerate(generated_line_params):
+    for data_tuple in generated_line_params:
         freq = data_tuple[0]
         temperature = data_tuple[1]
         i = [temp[0] for temp in data_dict[freq]].index(temperature)
