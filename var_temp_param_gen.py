@@ -12,7 +12,7 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
-    dir = '{0}/Analysis'.format(directory_name)
+    dir = '{0}\Analysis'.format(directory_name)
 
     for frequency in range(3, 6):
         freq = 10 ** frequency
@@ -55,7 +55,6 @@ def main():
 
             for index, data_var in enumerate(list_vars):
                 _, _, _, _, stderr = sp.stats.linregress(temperatures, data_var)
-                np.mean(data_var)
                 writer.writerow([list_vars_names[index]] + [np.mean(data_var)] + [stderr])
 
 

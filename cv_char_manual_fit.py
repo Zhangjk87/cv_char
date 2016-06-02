@@ -12,7 +12,7 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
-    dir = '{0}/Analysis'.format(directory_name)
+    dir = '{0}\Analysis'.format(directory_name)
     input_csv_name = 'manual_line_params.csv'
     output_csv_name = 'generated_line_params.csv'
 

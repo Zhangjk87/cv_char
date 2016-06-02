@@ -75,7 +75,7 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
-    dir = '{0}/Analysis'.format(directory_name)
+    dir = '{0}\Analysis'.format(directory_name)
     if not os.path.isdir(dir):
          os.makedirs(dir)
 
