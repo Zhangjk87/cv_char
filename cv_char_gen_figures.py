@@ -153,15 +153,15 @@ def main():
         var_names = ['Carrier Density, $cm^{-3}$', 'Depletion Width, $nm$', 'Intrinsic Energy, $eV$',
                      'Intrinsic Carrier Concentration, $cm^{-3}$', 'Fermi Energy, $eV$', 'Vbi, $V$']
 
-        for i in range(len(var_names)):
+        for index, var_name in enumerate(var_names):
             fig, ax = plt.subplots()
-            fig.suptitle('Temperature, $K$ vs. {0} at {1}Hz'.format(var_names[i], freq), fontsize=20)
-            plt.ylabel(r'{0}'.format(var_names[i]), fontsize=15)
+            fig.suptitle('Temperature, $K$ vs. {0} at {1}Hz'.format(var_name, freq), fontsize=20)
+            plt.ylabel(r'{0}'.format(var_name), fontsize=15)
             plt.xlabel('Temperature, $K$', fontsize=15)
             plt.tick_params(axis='both', which='major', labelsize=15)
             plt.locator_params(axis='y', nbins=5)
-            pic_name = 'Temperature vs. {0} at {1}Hz.png'.format(var_names[i], freq)
-            ax.plot(x_temp, dependent_vars_list[i], '.', markersize=10)
+            pic_name = 'Temperature vs. {0} at {1}Hz.png'.format(var_name, freq)
+            ax.plot(x_temp, dependent_vars_list[index], '.', markersize=10)
             fig.savefig(os.path.join(dir, pic_name))
             # plt.show()
             plt.close('all')
