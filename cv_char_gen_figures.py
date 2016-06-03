@@ -39,6 +39,7 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
+    device_num = config['Paths']['device_num']
     dir = '{0}\Analysis'.format(directory_name)
     if not os.path.isdir(dir):
          os.makedirs(dir)
@@ -68,7 +69,7 @@ def main():
                     ideal_reverse_y_intercept = float(row['Ideal Reverse Y Intercept'])
                     ideal_reverse_x_intercept = float(row['Ideal Reverse X Intercept'])
 
-                    filename = "{0}dev3_T{1}K_F{2}HZ_CV.txt".format(directory_name, temp, freq)
+                    filename = "{0}dev{1}_T{2}K_F{3}HZ_CV.txt".format(directory_name, device_num, temp, freq)
                     try:
                         cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0, 1))
                     except IOError:

@@ -48,6 +48,7 @@ def main():
     config = configparser.RawConfigParser()
     config.read('config.ini')
     directory_name = config['Paths']['data_dir']
+    device_num = config['Paths']['device_num']
     dir = '{0}\Analysis'.format(directory_name)
     if not os.path.isdir(dir):
         os.makedirs(dir)
@@ -66,7 +67,7 @@ def main():
             for file_number in range(200, 335, 5):
 
                 print('Currently Working on Data of Temperature: {0} at Frequency {1}'.format(file_number, freq))
-                filename = "{0}dev3_T{1}K_F{2}HZ_CV.txt".format(directory_name, file_number, freq)
+                filename = "{0}dev{1}_T{2}K_F{3}HZ_CV.txt".format(directory_name, device_num, file_number, freq)
                 try:
                     cv_raw = np.genfromtxt(filename, delimiter=',', skip_header=1, usecols=(0, 1))
                 except IOError:
