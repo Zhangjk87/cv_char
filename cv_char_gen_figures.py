@@ -77,12 +77,15 @@ def main():
 
                     capacitances = cv_raw[:, 1]
                     cap_inverse_square = np.reciprocal(np.square(capacitances))
+                    # voltages = cv_raw[:, 0]
+                    # voltages_inverse = -1 * voltages
                     cap_vs_volt = np.column_stack((cv_raw[:, 0], cap_inverse_square))
+                    # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
                     cap_vs_volt_forward = cap_vs_volt[:101, :]
                     cap_vs_volt_reverse = cap_vs_volt[101:, :]
 
                     # *************Creating and Saving Plots********************************************************
-                    x_forward = cap_vs_volt_forward[:, 0]
+                    x_forward = cap_vs_volt_forward[:,0]
                     y_forward = cap_vs_volt_forward[:,1]
                     x_reverse = cap_vs_volt_reverse[:, 0]
                     y_reverse = cap_vs_volt_reverse[:, 1]

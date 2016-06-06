@@ -50,6 +50,8 @@ def main():
     directory_name = config['Paths']['data_dir']
     device_num = config['Paths']['device_num']
     dir = '{0}\Analysis'.format(directory_name)
+    min_temp = int(config['Temp Bounds']['min_temp'])
+    max_temp = int(config['Temp Bounds']['max_temp'])
     if not os.path.isdir(dir):
         os.makedirs(dir)
 
@@ -64,7 +66,7 @@ def main():
                 ['Ideal Forward X Intercept'] + ['Ideal Reverse Slope'] + ['Ideal Reverse Y Intercept'] +
                 ['Ideal Reverse X Intercept'])
 
-            for file_number in range(200, 335, 5):
+            for file_number in range(min_temp, max_temp+5, 5):
 
                 print('Currently Working on Data of Temperature: {0} at Frequency {1}'.format(file_number, freq))
                 filename = "{0}dev{1}_T{2}K_F{3}HZ_CV.txt".format(directory_name, device_num, file_number, freq)
@@ -73,8 +75,11 @@ def main():
                 except IOError:
                     continue
                 capacitances = cv_raw[:, 1]
+                # voltages = cv_raw[:,0]
+                # voltages_inverse = -1*voltages
                 cap_inverse_square = np.reciprocal(np.square(capacitances))
                 cap_vs_volt = np.column_stack((cv_raw[:, 0], cap_inverse_square))
+                # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
                 cap_vs_volt_forward = cap_vs_volt[:101, :]
                 cap_vs_volt_reverse = cap_vs_volt[101:, :]
                 energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
@@ -102,6 +107,8 @@ def main():
                 writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow(['Temperature']+['Frequency']+['Forward Left Bound']+['Forward Right Bound']+
                                 ['Reverse Left Bound']+['Reverse Right Bound'])
+
+    os.system("cv_char_gen_figures.py")
 
 if __name__ == '__main__':
     main()

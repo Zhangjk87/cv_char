@@ -35,8 +35,8 @@ def main():
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(['Variable']+ ['Average Value'] + ['Uncertainty'])
 
-            temp_left_bound = config['Temp Bounds']['lower_bound']
-            temp_right_bound = config['Temp Bounds']['upper_bound']
+            temp_left_bound = config['Temp Bounds']['lower_bound_{0}'.format(freq)]
+            temp_right_bound = config['Temp Bounds']['upper_bound_{0}'.format(freq)]
 
             temperatures = []
             carrier_densities = []
@@ -47,7 +47,7 @@ def main():
             list_vars = [carrier_densities, depletion_widths, built_in_voltages]
 
             for index, temp in enumerate(x_temp):
-                if (temp > temp_left_bound) and (temp < temp_right_bound):
+                if (temp >= temp_left_bound) and (temp <= temp_right_bound):
                     temperatures.append(float(temp))
                     carrier_densities.append(float(carrier_density[index]))
                     depletion_widths.append(float(depletion_width[index]))

@@ -46,8 +46,11 @@ def main():
                     continue
 
                 capacitances = cv_raw[:, 1]
+                # voltages = cv_raw[:, 0]
+                # voltages_inverse = -1 * voltages
                 cap_inverse_square = np.reciprocal(np.square(capacitances))
-                cap_vs_volt = np.column_stack((cv_raw[:, 0], cap_inverse_square))
+                cap_vs_volt = np.column_stack((cv_raw[:,0], cap_inverse_square))
+                # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
                 cap_vs_volt_forward = cap_vs_volt[:101, :]
                 cap_vs_volt_reverse = cap_vs_volt[101:, :]
                 ideal_forward_x_values = []
@@ -79,6 +82,9 @@ def main():
             data_sorted = sorted(data)
             for row in data_sorted:
                 writer.writerow(row)
+
+    os.system("csv_replacer.py")
+    os.system("cv_char_gen_figures.py")
 
 
 
