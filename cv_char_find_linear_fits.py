@@ -80,8 +80,8 @@ def main():
                 cap_inverse_square = np.reciprocal(np.square(capacitances))
                 cap_vs_volt = np.column_stack((cv_raw[:, 0], cap_inverse_square))
                 # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
-                cap_vs_volt_forward = cap_vs_volt[:101, :]
-                cap_vs_volt_reverse = cap_vs_volt[101:, :]
+                cap_vs_volt_forward = cap_vs_volt[:int(cap_vs_volt.shape[0]/2), :]
+                cap_vs_volt_reverse = cap_vs_volt[int(cap_vs_volt.shape[0]/2):, :]
                 energy_bandgap = config.getfloat('Constants', 'energy_bandgap')
 
                 diff_threshold_fraction = .0015
@@ -108,6 +108,7 @@ def main():
                 writer.writerow(['Temperature']+['Frequency']+['Forward Left Bound']+['Forward Right Bound']+
                                 ['Reverse Left Bound']+['Reverse Right Bound'])
 
+    print("Generating Figures...")
     os.system("cv_char_gen_figures.py")
 
 if __name__ == '__main__':

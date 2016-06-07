@@ -81,8 +81,8 @@ def main():
                     # voltages_inverse = -1 * voltages
                     cap_vs_volt = np.column_stack((cv_raw[:, 0], cap_inverse_square))
                     # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
-                    cap_vs_volt_forward = cap_vs_volt[:101, :]
-                    cap_vs_volt_reverse = cap_vs_volt[101:, :]
+                    cap_vs_volt_forward = cap_vs_volt[:int(cap_vs_volt.shape[0]/2), :]
+                    cap_vs_volt_reverse = cap_vs_volt[int(cap_vs_volt.shape[0]/2):, :]
 
                     # *************Creating and Saving Plots********************************************************
                     x_forward = cap_vs_volt_forward[:,0]

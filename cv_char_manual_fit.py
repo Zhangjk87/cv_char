@@ -16,6 +16,7 @@ def main():
     dir = '{0}\Analysis'.format(directory_name)
     input_csv_name = 'manual_line_params.csv'
     output_csv_name = 'generated_line_params.csv'
+    print("Generating Linear Fit Parameters...")
 
     data = []
 
@@ -51,8 +52,8 @@ def main():
                 cap_inverse_square = np.reciprocal(np.square(capacitances))
                 cap_vs_volt = np.column_stack((cv_raw[:,0], cap_inverse_square))
                 # cap_vs_volt = np.column_stack((voltages_inverse, cap_inverse_square))
-                cap_vs_volt_forward = cap_vs_volt[:101, :]
-                cap_vs_volt_reverse = cap_vs_volt[101:, :]
+                cap_vs_volt_forward = cap_vs_volt[:int(cap_vs_volt.shape[0]/2), :]
+                cap_vs_volt_reverse = cap_vs_volt[int(cap_vs_volt.shape[0]/2):, :]
                 ideal_forward_x_values = []
                 ideal_forward_y_values = []
                 ideal_reverse_x_values = []
@@ -83,7 +84,9 @@ def main():
             for row in data_sorted:
                 writer.writerow(row)
 
+    print("Integrating CSV Files...")
     os.system("csv_replacer.py")
+    print("Regenerating Figures...")
     os.system("cv_char_gen_figures.py")
 
 
